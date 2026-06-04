@@ -754,10 +754,11 @@ export default function App() {
               </table>
             </div>
 
-            <div className="footer">
-              <span>★ Ranking generado con IA · Chile 2024–2025</span>
-              <span>· Consumos en km/L estimado ciclo mixto real</span>
-            </div>
+    <div className="footer">
+      <span>★ CualMeCompro · Ranking con IA · Chile 2025</span>
+      <span>· Consumos en km/L estimado ciclo mixto real</span>
+      <a href="/terminos.html" style={{color:"var(--ink3)",fontSize:".75rem",textDecoration:"none"}}>Términos y privacidad</a>
+    </div>
 
             <div className="results-actions">
               <button className="btn-ghost" onClick={goBack}>← Volver</button>
