@@ -1,31 +1,897 @@
-// function App() {
-//   return (
-//     <div style={{ padding: "2rem" }}>
-//       <h1>QueCompro</h1>
+import { useState, useEffect } from "react";
 
-//       <input
-//         type="text"
-//         placeholder="Buscar producto..."
-//         style={{
-//           width: "300px",
-//           padding: "10px",
-//           marginRight: "10px"
-//         }}
-//       />
+/* ── Silhouettes SVG for carroceria ── */
+const SVG_SEDAN = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 40 Q12 28 30 24 Q50 18 65 20 Q80 18 95 24 Q108 28 110 40 Z" fill="currentColor" opacity="0.15"/><path d="M10 40 Q12 28 30 24 Q50 18 65 20 Q80 18 95 24 Q108 28 110 40" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><rect x="8" y="39" width="104" height="8" rx="2" fill="currentColor" opacity="0.2"/><rect x="8" y="39" width="104" height="8" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="30" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="50" r="3" fill="currentColor" opacity="0.6"/><circle cx="90" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="90" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="90" cy="50" r="3" fill="currentColor" opacity="0.6"/><path d="M35 24 Q40 16 55 14 Q68 12 75 14 Q85 16 88 24" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;
+const SVG_SUV = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 42 L8 22 Q10 16 25 15 L85 15 Q100 15 112 22 L112 42 Z" fill="currentColor" opacity="0.12"/><path d="M8 42 L8 22 Q10 16 25 15 L85 15 Q100 15 112 22 L112 42" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><rect x="6" y="41" width="108" height="7" rx="2" fill="currentColor" opacity="0.2"/><rect x="6" y="41" width="108" height="7" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="51" r="7" fill="currentColor" opacity="0.3"/><circle cx="30" cy="51" r="7" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="51" r="3" fill="currentColor" opacity="0.6"/><circle cx="90" cy="51" r="7" fill="currentColor" opacity="0.3"/><circle cx="90" cy="51" r="7" stroke="currentColor" stroke-width="2"/><circle cx="90" cy="51" r="3" fill="currentColor" opacity="0.6"/><line x1="50" y1="15" x2="50" y2="42" stroke="currentColor" stroke-width="1.5" opacity="0.4"/></svg>`;
+const SVG_HATCHBACK = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 40 Q14 30 28 26 Q45 20 60 20 Q74 20 88 24 Q102 28 108 40 Z" fill="currentColor" opacity="0.12"/><path d="M12 40 Q14 30 28 26 Q45 20 60 20 Q74 20 88 24 Q102 28 108 40" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M45 20 Q50 12 68 10 Q80 10 88 16 Q92 19 88 24" stroke="currentColor" stroke-width="2" fill="none"/><rect x="10" y="39" width="100" height="8" rx="2" fill="currentColor" opacity="0.2"/><rect x="10" y="39" width="100" height="8" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="30" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="50" r="3" fill="currentColor" opacity="0.6"/><circle cx="88" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="88" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="88" cy="50" r="3" fill="currentColor" opacity="0.6"/></svg>`;
+const SVG_PICKUP = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="60" y="18" width="50" height="22" rx="2" fill="currentColor" opacity="0.1"/><rect x="60" y="18" width="50" height="22" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 40 L10 28 Q12 20 28 19 L60 19 L60 40" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><path d="M10 40 L10 30 Q11 22 26 20 L58 20 L60 20" fill="currentColor" opacity="0.12"/><rect x="8" y="39" width="104" height="8" rx="2" fill="currentColor" opacity="0.2"/><rect x="8" y="39" width="104" height="8" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="28" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="28" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="28" cy="50" r="3" fill="currentColor" opacity="0.6"/><circle cx="92" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="92" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="92" cy="50" r="3" fill="currentColor" opacity="0.6"/></svg>`;
+const SVG_MINIVAN = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 40 L8 20 Q9 15 20 14 L90 14 Q105 14 112 20 L112 40 Z" fill="currentColor" opacity="0.1"/><path d="M8 40 L8 20 Q9 15 20 14 L90 14 Q105 14 112 20 L112 40" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/><rect x="6" y="39" width="108" height="8" rx="2" fill="currentColor" opacity="0.2"/><rect x="6" y="39" width="108" height="8" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="28" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="28" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="28" cy="50" r="3" fill="currentColor" opacity="0.6"/><circle cx="92" cy="50" r="7" fill="currentColor" opacity="0.3"/><circle cx="92" cy="50" r="7" stroke="currentColor" stroke-width="2"/><circle cx="92" cy="50" r="3" fill="currentColor" opacity="0.6"/><line x1="45" y1="14" x2="45" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.4"/><line x1="72" y1="14" x2="72" y2="40" stroke="currentColor" stroke-width="1.5" opacity="0.4"/></svg>`;
+const SVG_ANY = `<svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="60" y="36" font-size="28" text-anchor="middle" fill="currentColor">🎯</text></svg>`;
 
-//       <button>Buscar</button>
-//     </div>
-//   );
-// }
+const QUESTIONS = [
+  {
+    id: "carroceria", label: "Pregunta 1 de 7",
+    text: "¿Tienes preferencia por algún tipo de auto?",
+    sub: "Elige el que más te acomoda o 'Me da igual'",
+    type: "svg_options",
+    options: [
+      { svg: SVG_SEDAN,    title: "Sedán",    desc: "Elegante, eficiente, ideal ciudad" },
+      { svg: SVG_HATCHBACK,title: "Hatchback",desc: "Compacto, fácil de estacionar" },
+      { svg: SVG_SUV,      title: "SUV",      desc: "Altura, espacio, versatilidad" },
+      { svg: SVG_PICKUP,   title: "Pickup",   desc: "Trabajo pesado, campo, carga" },
+      { svg: SVG_MINIVAN,  title: "Minivan",  desc: "Máximo espacio familiar" },
+      { svg: SVG_ANY,      title: "Me da igual", desc: "Recomiéndame tú" },
+    ]
+  },
+  {
+    id: "motor", label: "Pregunta 2 de 7",
+    text: "¿Qué tipo de motor prefieres?",
+    sub: "Si no sabes, elige 'Sin preferencia'",
+    type: "options", cols: 2,
+    options: [
+      { icon: "⛽", title: "Bencina",           desc: "Lo más común, red de talleres amplia" },
+      { icon: "🌿", title: "Híbrido",           desc: "Bencina + eléctrico, sin cargar" },
+      { icon: "🔌", title: "Híbrido enchufable",desc: "Enchufas para distancias cortas eléctricas" },
+      { icon: "⚡", title: "Eléctrico puro",    desc: "Sin bencina, solo enchufe" },
+      { icon: "🎯", title: "Sin preferencia",   desc: "Recomiéndame lo mejor para mí" },
+    ]
+  },
+  {
+    id: "presupuesto", label: "Pregunta 3 de 7",
+    text: "¿Cuánto tienes disponible?",
+    sub: "Precio total en millones de pesos chilenos (CLP)",
+    type: "range", min: 4, max: 100, step: 1, defaultVal: 15,
+    format: v => `$${v}M CLP`, rangeLow: "$4M", rangeHigh: "$100M"
+  },
+  {
+    id: "prioridad", label: "Pregunta 4 de 7",
+    text: "¿Qué es lo más importante para ti?",
+    sub: "Elige solo una — la que más te pesa",
+    type: "options", cols: 2,
+    options: [
+      { icon: "💸", title: "Ahorro",        desc: "Poco combustible, mantención barata" },
+      { icon: "⚡", title: "Performance",   desc: "Potencia, conducción entretenida" },
+      { icon: "🛡️", title: "Confiabilidad", desc: "Que nunca falle, fácil de reparar" },
+      { icon: "📦", title: "Espacio",       desc: "Amplio, cómodo, maletero grande" },
+    ]
+  },
+  {
+    id: "nuevo_usado", label: "Pregunta 5 de 7",
+    text: "¿Nuevo, seminuevo o usado?",
+    sub: "Cada opción tiene sus ventajas reales",
+    type: "options", cols: 3,
+    options: [
+      { icon: "✨", title: "Nuevo",      desc: "Garantía total, 0 km" },
+      { icon: "🔄", title: "Seminuevo", desc: "1–4 años, como nuevo pero más barato" },
+      { icon: "🕰️", title: "Usado",     desc: "5+ años, más auto por la plata" },
+    ]
+  },
+  {
+    id: "experiencia", label: "Pregunta 6 de 7",
+    text: "¿Cuánta experiencia tienes manejando?",
+    sub: "Sin juicio — solo para saber qué tan fácil debe ser el auto",
+    type: "options", cols: 2,
+    options: [
+      { icon: "🆕", title: "Recién saqué la licencia", desc: "Necesito algo fácil y perdonador" },
+      { icon: "📅", title: "Pocos años manejando",     desc: "Me defiendo pero no soy experto" },
+      { icon: "✅", title: "Manejo con confianza",     desc: "Varios años de experiencia" },
+      { icon: "🏁", title: "Manejo experto",           desc: "Disfruto conducir, me gusta el control" },
+    ]
+  },
+  {
+    id: "extra", label: "Pregunta 7 de 7",
+    text: "¿Algo más que debería saber?",
+    sub: "Opcional — cualquier detalle que ayude a afinar el ranking",
+    type: "text",
+    placeholder: "Ej: tengo perros, manejo en caminos de tierra, soy conductor de app, necesito maletero grande…"
+  }
+];
 
-// export default App;
+const LABEL_MAP = {
+  carroceria: "Tipo de auto", motor: "Motor", presupuesto: "Presupuesto",
+  prioridad: "Prioridad #1", nuevo_usado: "Condición", experiencia: "Experiencia",
+  extra: "Notas"
+};
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0d0f;
+    --surface:   #16161a;
+    --surface2:  #1e1e24;
+    --border:    #2a2a32;
+    --accent:    #e8ff47;
+    --accent2:   #47d9ff;
+    --ink1:      #f0f0f4;
+    --ink2:      #9090a8;
+    --ink3:      #5a5a6e;
+    --rg:        #e8ff47;
+    --rs:        #47d9ff;
+    --rb:        #ff9f47;
+    --danger:    #ff4f4f;
+    --radius:    14px;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  body { background: var(--bg); color: var(--ink1); font-family: var(--font-body); }
+
+  .app-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 16px 60px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 0 32px;
+  }
+  .logo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--ink2); font-weight: 400; }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    width: 100%;
+    max-width: 760px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-bottom: 40px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── CARD ── */
+  .card {
+    width: 100%;
+    max-width: 760px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 44px;
+    animation: fadeUp .35s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── INTRO ── */
+  .intro-label {
+    font-family: var(--font-head);
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .intro-title {
+    font-family: var(--font-head);
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--ink1);
+    margin-bottom: 12px;
+  }
+  .intro-title em { color: var(--accent); font-style: normal; }
+  .intro-lead {
+    font-size: 1rem;
+    color: var(--ink2);
+    line-height: 1.65;
+    margin-bottom: 32px;
+  }
+  .intro-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .intro-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: .9rem;
+    color: var(--ink2);
+  }
+  .intro-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── QUESTION ── */
+  .q-label {
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-family: var(--font-head);
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink1);
+    margin-bottom: 6px;
+  }
+  .q-sub {
+    font-size: .875rem;
+    color: var(--ink3);
+    margin-bottom: 28px;
+  }
+
+  /* ── OPTIONS GRID ── */
+  .options-grid { display: grid; gap: 10px; }
+  .opts-2 { grid-template-columns: 1fr 1fr; }
+  .opts-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .opts-1 { grid-template-columns: 1fr; }
+
+  .opt-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .18s, background .18s, transform .12s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .opt-btn:hover {
+    border-color: var(--accent);
+    background: #1e1e24;
+    transform: translateY(-1px);
+  }
+  .opt-btn.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,71,.07);
+  }
+  .opt-icon { font-size: 1.375rem; margin-bottom: 4px; }
+  .opt-title {
+    font-family: var(--font-head);
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--ink1);
+  }
+  .opt-desc { font-size: .8rem; color: var(--ink2); line-height: 1.4; }
+
+  /* ── SVG OPTIONS ── */
+  .svg-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .svg-opt-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 12px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .18s, background .18s, transform .12s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink2);
+  }
+  .svg-opt-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .svg-opt-btn.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,71,.07);
+    color: var(--accent);
+  }
+  .svg-opt-btn svg { width: 100%; max-width: 110px; height: 52px; }
+  .svg-opt-title {
+    font-family: var(--font-head);
+    font-size: .85rem;
+    font-weight: 700;
+    color: inherit;
+  }
+  .svg-opt-desc { font-size: .72rem; color: var(--ink3); }
+
+  /* ── RANGE ── */
+  .range-wrap { padding: 8px 0 20px; }
+  .range-val {
+    font-family: var(--font-head);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .range-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: .78rem; color: var(--ink3); }
+
+  /* ── TEXTAREA ── */
+  .text-wrap { padding: 4px 0; }
+  .q-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    color: var(--ink1);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    padding: 12px 0;
+    resize: none;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .q-textarea::placeholder { color: var(--ink3); }
+  .q-textarea:focus { border-color: var(--accent); }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-family: var(--font-head);
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s, transform .12s;
+  }
+  .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: var(--font-body);
+    font-size: .875rem;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .btn-ghost:hover { color: var(--ink1); border-color: var(--ink2); }
+  .btn-restart {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: var(--font-head);
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-restart:hover { background: rgba(232,255,71,.08); }
+  .q-actions { display: flex; align-items: center; gap: 12px; margin-top: 28px; }
+
+  /* ── LOADING ── */
+  .loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 0;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ink1);
+    text-align: center;
+  }
+  .loading-sub { font-size: .875rem; color: var(--ink3); text-align: center; }
+  .profile-summary {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-top: 8px;
+  }
+  .profile-summary h4 {
+    font-family: var(--font-head);
+    font-size: .75rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 12px;
+  }
+  .profile-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 12px;
+    font-size: .8rem;
+    color: var(--ink2);
+  }
+  .chip strong { color: var(--ink1); }
+
+  /* ── RESULTS ── */
+  .results-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .results-title {
+    font-family: var(--font-head);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink1);
+  }
+  .results-title span { color: var(--accent); }
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: .8rem;
+    color: var(--ink2);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .filter-btn:hover { border-color: var(--ink2); color: var(--ink1); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #0d0d0f; font-weight: 600; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  th {
+    text-align: left;
+    font-family: var(--font-head);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 16px 14px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: .875rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: .85rem;
+  }
+  .rg { background: rgba(232,255,71,.15); color: var(--rg); }
+  .rs { background: rgba(71,217,255,.12); color: var(--rs); }
+  .rb { background: rgba(255,159,71,.12); color: var(--rb); }
+  .rn { background: var(--surface2); color: var(--ink3); }
+
+  .auto-name { font-family: var(--font-head); font-weight: 700; color: var(--ink1); font-size: .95rem; }
+  .auto-price { font-size: .78rem; color: var(--ink3); margin-top: 2px; }
+
+  .verd-label {
+    font-family: var(--font-head);
+    font-size: .8rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .verd-razon { font-size: .8rem; color: var(--ink2); line-height: 1.5; }
+
+  .tag-verd {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 700;
+    font-family: var(--font-head);
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .tag-verd.muy { background: rgba(232,255,71,.15); color: var(--rg); }
+  .tag-verd.rec { background: rgba(71,217,255,.12); color: var(--rs); }
+  .tag-verd.con { background: rgba(255,159,71,.12); color: var(--rb); }
+
+  .motor-info { font-size: .8rem; color: var(--ink2); }
+  .consumo-tags { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .consumo-tag { font-size: .75rem; }
+
+  .pros-cons { display: flex; flex-direction: column; gap: 4px; }
+  .pro, .con {
+    font-size: .78rem;
+    padding: 2px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .pro { color: #7dcc7d; }
+  .pro::before { content: '+'; position: absolute; left: 0; font-weight: 700; }
+  .con { color: var(--danger); }
+  .con::before { content: '−'; position: absolute; left: 0; font-weight: 700; }
+
+  .footer {
+    margin-top: 16px;
+    font-size: .75rem;
+    color: var(--ink3);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .results-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+
+  .error-box {
+    background: rgba(255,79,79,.08);
+    border: 1px solid rgba(255,79,79,.3);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    color: var(--danger);
+    font-size: .9rem;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 28px 22px; }
+    .intro-title { font-size: 1.8rem; }
+    .q-text { font-size: 1.3rem; }
+    .svg-options-grid { grid-template-columns: repeat(2, 1fr); }
+    .opts-3 { grid-template-columns: 1fr 1fr; }
+    .opts-2 { grid-template-columns: 1fr 1fr; }
+  }
+`;
 
 export default function App() {
+  const [phase, setPhase] = useState("intro"); // intro | quiz | loading | results
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("Todos");
+
+  const q = QUESTIONS[step];
+  const total = QUESTIONS.length;
+  const progress = phase === "intro" ? 0 : phase === "results" ? 100 : ((step / total) * 100);
+
+  function startQuiz() { setPhase("quiz"); setStep(0); }
+
+  function answer(val) {
+    const updated = { ...answers, [q.id]: val };
+    setAnswers(updated);
+    if (step < total - 1) {
+      setTimeout(() => setStep(s => s + 1), q.type === "range" ? 0 : 180);
+    }
+  }
+
+  function goBack() {
+    if (phase === "results") { setPhase("quiz"); setStep(total - 1); return; }
+    if (step === 0) { setPhase("intro"); } else { setStep(s => s - 1); }
+  }
+
+  function restart() {
+    setPhase("intro"); setStep(0); setAnswers({}); setResult(null); setError(null);
+  }
+
+  async function submit() {
+    const ans = answers;
+    const profileText = [
+      `Tipo de carrocería preferida: ${ans.carroceria}`,
+      `Tipo de motor preferido: ${ans.motor}`,
+      `Presupuesto: $${ans.presupuesto}M CLP`,
+      `Prioridad principal: ${ans.prioridad}`,
+      `Condición del auto: ${ans.nuevo_usado}`,
+      `Experiencia manejando: ${ans.experiencia}`,
+      ans.extra ? `Información adicional: ${ans.extra}` : null,
+    ].filter(Boolean).join("\n");
+
+    setPhase("loading");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/ranking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileText }),
+      });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data = await res.json();
+      // ranking.js puede devolver { autos: [...] } o { titulo, subtitulo, autos: [...] }
+      const autos = data.autos || [];
+      if (!autos.length) throw new Error("Sin resultados");
+      setResult({ autos, profile: ans });
+      setPhase("results");
+    } catch (e) {
+      setError("No pude generar el ranking. Intenta de nuevo.");
+      setPhase("quiz");
+    }
+  }
+
+  const verdTag = v => {
+    if (!v) return null;
+    const low = v.toLowerCase();
+    const cls = low.includes("muy") ? "muy" : low.includes("considerar") ? "con" : "rec";
+    return <span className={`tag-verd ${cls}`}>{v}</span>;
+  };
+
+  const filteredAutos = result?.autos?.filter(a => {
+    if (filter === "Todos") return true;
+    return a.veredicto?.toLowerCase().includes(filter.toLowerCase());
+  }) || [];
+
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <h1 className="text-5xl font-bold text-white">
-        Tailwind funcionando 🚀
-      </h1>
-    </div>
-  )
+    <>
+      <style>{css}</style>
+      <div className="app-shell">
+        <nav className="nav">
+          <div className="logo">¿Qué<span>Compro</span>?</div>
+          {phase === "quiz" && (
+            <span style={{ fontSize: ".8rem", color: "var(--ink3)" }}>
+              {step + 1} / {total}
+            </span>
+          )}
+        </nav>
+
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+
+        {/* ── INTRO ── */}
+        {phase === "intro" && (
+          <div className="card">
+            <div className="intro-label">Chile · 2024–2025</div>
+            <h1 className="intro-title">El auto correcto<br/>para <em>ti.</em></h1>
+            <p className="intro-lead">
+              7 preguntas. Sin tecnicismos. Sin jerga de concesionario. Al final recibes
+              un ranking personalizado de los autos que más encajan con tu perfil real.
+            </p>
+            <div className="intro-items">
+              {[
+                "Menos de 2 minutos",
+                "Ranking generado con IA según tu perfil exacto",
+                "Pros, contras y por qué encaja contigo",
+                "Contexto Chile: repuestos, redes, precios reales",
+              ].map(t => (
+                <div key={t} className="intro-item">
+                  <span className="intro-dot" />
+                  <span>{t}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn-primary" onClick={startQuiz}>Empezar →</button>
+          </div>
+        )}
+
+        {/* ── QUIZ ── */}
+        {phase === "quiz" && (
+          <div className="card" key={step}>
+            <div className="q-label">{q.label}</div>
+            <div className="q-text">{q.text}</div>
+            <div className="q-sub">{q.sub}</div>
+
+            {q.type === "svg_options" && (
+              <div className="svg-options-grid">
+                {q.options.map(opt => (
+                  <button
+                    key={opt.title}
+                    className={`svg-opt-btn ${answers[q.id] === opt.title ? "selected" : ""}`}
+                    onClick={() => answer(opt.title)}
+                    dangerouslySetInnerHTML={{ __html:
+                      `${opt.svg}<div class="svg-opt-title">${opt.title}</div><div class="svg-opt-desc">${opt.desc}</div>`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {q.type === "options" && (() => {
+              const n = q.options.length;
+              const cls = n <= 3 ? `opts-${n}` : "opts-2";
+              return (
+                <div className={`options-grid ${cls}`}>
+                  {q.options.map(opt => (
+                    <button
+                      key={opt.title}
+                      className={`opt-btn ${answers[q.id] === opt.title ? "selected" : ""}`}
+                      onClick={() => answer(opt.title)}
+                    >
+                      <span className="opt-icon">{opt.icon}</span>
+                      <span className="opt-title">{opt.title}</span>
+                      <span className="opt-desc">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {q.type === "range" && (
+              <div className="range-wrap">
+                <div className="range-val">{q.format(answers[q.id] ?? q.defaultVal)}</div>
+                <input
+                  type="range"
+                  min={q.min} max={q.max} step={q.step}
+                  value={answers[q.id] ?? q.defaultVal}
+                  onChange={e => setAnswers(a => ({ ...a, [q.id]: +e.target.value }))}
+                />
+                <div className="range-labels"><span>{q.rangeLow}</span><span>{q.rangeHigh}</span></div>
+              </div>
+            )}
+
+            {q.type === "text" && (
+              <div className="text-wrap">
+                <textarea
+                  className="q-textarea"
+                  rows={4}
+                  placeholder={q.placeholder}
+                  value={answers[q.id] ?? ""}
+                  onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
+                />
+              </div>
+            )}
+
+            <div className="q-actions">
+              <button className="btn-ghost" onClick={goBack}>← Volver</button>
+              {(q.type === "range" || q.type === "text") && (
+                <button className="btn-primary" onClick={() => {
+                  if (step < total - 1) setStep(s => s + 1);
+                  else submit();
+                }}>
+                  {step === total - 1 ? "Ver mi ranking →" : "Continuar →"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── LOADING ── */}
+        {phase === "loading" && (
+          <div className="card">
+            <div className="loading-wrap">
+              <div className="spinner" />
+              <div className="loading-title">Analizando tu perfil…</div>
+              <div className="loading-sub">Estamos cruzando tu perfil con el mercado chileno 2024–2025</div>
+              <div className="profile-summary">
+                <h4>Tu perfil</h4>
+                <div className="profile-chips">
+                  {Object.entries(answers).filter(([, v]) => v).map(([k, v]) => (
+                    <span key={k} className="chip">
+                      <strong>{LABEL_MAP[k] || k}:</strong> {String(v).replace(/ \(.*?\)/, "")}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESULTS ── */}
+        {phase === "results" && result && (
+          <div className="card">
+            {error && <div className="error-box">{error}</div>}
+            <div className="results-header">
+              <div className="results-title">Tu ranking <span>personalizado</span></div>
+              <div className="filter-bar">
+                {["Todos", "Muy recomendado", "Recomendado", "Considerar"].map(f => (
+                  <button
+                    key={f}
+                    className={`filter-btn ${filter === f ? "active" : ""}`}
+                    onClick={() => setFilter(f)}
+                  >{f}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Auto</th>
+                    <th>Veredicto</th>
+                    <th>Motor / Consumo</th>
+                    <th>Pros / Contras</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAutos.map((auto, i) => {
+                    const origIdx = result.autos.indexOf(auto);
+                    const rankCls = origIdx === 0 ? "rg" : origIdx === 1 ? "rs" : origIdx === 2 ? "rb" : "rn";
+                    const rankNum = origIdx + 1;
+                    return (
+                      <tr key={i}>
+                        <td><span className={`rank-badge ${rankCls}`}>{rankNum}</span></td>
+                        <td>
+                          <div className="auto-name">{auto.nombre}</div>
+                          <div className="auto-price">{auto.precio_desde}</div>
+                        </td>
+                        <td>
+                          {verdTag(auto.veredicto)}
+                          <div className="verd-razon">{auto.razon}</div>
+                        </td>
+                        <td>
+                          <div className="motor-info">{auto.motor_disponible}</div>
+                          <div className="consumo-tags">
+                            {auto.consumo_ciudad && <span className="consumo-tag" style={{ color: "var(--ink2)" }}>🏙️ {auto.consumo_ciudad}</span>}
+                            {auto.consumo_ruta && <span className="consumo-tag" style={{ color: "var(--ink3)" }}>🛣️ {auto.consumo_ruta}</span>}
+                          </div>
+                        </td>
+                        <td className="pros-cons">
+                          {(auto.pros || []).map((p, j) => <span key={j} className="pro">{p}</span>)}
+                          {(auto.contras || []).map((c, j) => <span key={j} className="con">{c}</span>)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="footer">
+              <span>★ Ranking generado con IA · Chile 2024–2025</span>
+              <span>· Consumos en km/L estimado ciclo mixto real</span>
+            </div>
+
+            <div className="results-actions">
+              <button className="btn-ghost" onClick={goBack}>← Volver</button>
+              <button className="btn-restart" onClick={restart}>Hacer de nuevo</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
