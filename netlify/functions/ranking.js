@@ -44,6 +44,8 @@ Reglas:
 - Considera: redes de servicio por zona, disponibilidad repuestos, precio mercado chileno
 - Consumo expresado en km/L (kilómetros por litro), NO en L/100km
 - Debes extraer la informacion de sitios confiables para los datos tecnicos del vehiculo, para los comentarios descriptivos puedes inlcuir sitios de reseñas y opiniones.
+- El consumo de cada vehiculo debe ser el declarado por el fabricante.
+- Debes usar el nombre de las marcas y modelos en el mercado chilenmo.
 - Lenguaje español chileno directo y profesional`;
 
   try {
