@@ -548,7 +548,7 @@ export default function App() {
       <style>{css}</style>
       <div className="app-shell">
         <nav className="nav">
-          <div className="logo">¿Qué<span>Compro</span>?</div>
+          <div className="logo"><span>C</span>ual<span>M</span>e<span>C</span>ompro</div>
           {phase === "quiz" && (
             <span style={{ fontSize: ".8rem", color: "var(--ink3)" }}>
               {step + 1} / {total}
