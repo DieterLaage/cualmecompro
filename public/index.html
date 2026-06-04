@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>¿Qué Compro? — Ranking de autos para Chile</title>
+  <meta name="description" content="7 preguntas. Un ranking personalizado de autos para ti, en Chile. Gratis." />
+  <meta property="og:title" content="¿Qué Compro? — Tu ranking de autos" />
+  <meta property="og:description" content="7 preguntas. Un ranking personalizado de autos para ti, en Chile. Gratis." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1814; --ink2: #4a4740; --ink3: #8a8780;
+      --paper: #f5f2ec; --paper2: #ede9e0; --paper3: #e3ddd2;
+      --accent: #b8430a; --accent-light: #f5e8df;
+      --green: #3b6d11; --green-light: #eaf3de;
+      --blue: #185fa5; --blue-light: #e6f1fb;
+      --purple: #3c3489; --purple-light: #eeedfe;
+      --red: #a32d2d; --red-light: #fcebeb;
+      --amber: #854f0b; --amber-light: #faeeda;
+      --border: rgba(26,24,20,0.12); --border-strong: rgba(26,24,20,0.22);
+    }
+    body { background: var(--paper); }
+    #root { min-height: 100vh; }
+
+    .wrap { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); font-size: 13px; line-height: 1.5; min-height: 100vh; }
+    .site-header { padding: 1.5rem 2rem 1.2rem; border-bottom: 1px solid var(--border-strong); display: flex; justify-content: space-between; align-items: flex-end; }
+    .site-header h1 { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 300; letter-spacing: -0.02em; }
+    .site-header p { font-size: 11px; color: var(--ink3); margin-top: 4px; font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+    .step-counter { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); letter-spacing: 0.04em; }
+    .progress-wrap { height: 2px; background: var(--paper3); }
+    .progress-fill { height: 2px; background: var(--accent); transition: width 0.4s ease; }
+    .main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    .intro-big { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 300; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 1.25rem; }
+    .intro-big em { font-style: italic; color: var(--accent); }
+    .intro-lead { font-size: 13px; color: var(--ink2); line-height: 1.7; max-width: 500px; margin-bottom: 2rem; }
+    .intro-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 2.5rem; }
+    .intro-item { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--ink2); font-family: 'DM Mono', monospace; }
+    .intro-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    .q-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 0.8rem; }
+    .q-text { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 0.4rem; }
+    .q-sub { font-size: 11px; color: var(--ink3); margin-bottom: 2rem; font-family: 'DM Mono', monospace; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 2rem; }
+    .options-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .option-btn { background: var(--paper); border: 0.5px solid var(--border-strong); border-radius: 8px; padding: 13px 14px; cursor: pointer; text-align: left; transition: all 0.15s; font-family: 'DM Sans', sans-serif; width: 100%; }
+    .option-btn:hover { background: var(--paper2); border-color: var(--ink3); }
+    .option-btn.sel { background: var(--ink); border-color: var(--ink); }
+    .option-btn.sel .opt-title { color: var(--paper); }
+    .option-btn.sel .opt-desc { color: var(--paper3); }
+    .opt-icon { font-size: 17px; margin-bottom: 7px; display: block; }
+    .opt-title { font-size: 12px; font-weight: 500; color: var(--ink); display: block; margin-bottom: 2px; }
+    .opt-desc { font-size: 10px; color: var(--ink3); line-height: 1.4; font-family: 'DM Mono', monospace; }
+
+    .range-wrap { margin-bottom: 2rem; }
+    .range-val { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 300; color: var(--ink); margin-bottom: 10px; letter-spacing: -0.03em; }
+    .range-labels { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink3); margin-top: 6px; }
+    input[type=range] { -webkit-appearance: none; width: 100%; height: 2px; background: var(--paper3); outline: none; border-radius: 2px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%; background: var(--ink); cursor: pointer; border: 3px solid var(--paper); box-shadow: 0 0 0 1px var(--ink); }
+
+    .btn-row { display: flex; gap: 10px; align-items: center; }
+    .btn-primary { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; background: var(--ink); color: var(--paper); border: none; padding: 11px 26px; border-radius: 4px; cursor: pointer; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.8; }
+    .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-ghost { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.05em; background: transparent; color: var(--ink3); border: 0.5px solid var(--border); padding: 9px 18px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+    .btn-ghost:hover { color: var(--ink); border-color: var(--ink3); }
+
+    .loading-wrap { text-align: center; padding: 3.5rem 0; }
+    .loading-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 300; margin-bottom: 0.6rem; }
+    .loading-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); letter-spacing: 0.05em; margin-bottom: 2.5rem; }
+    .dots { display: inline-flex; gap: 5px; margin-bottom: 2.5rem; }
+    .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink3); animation: pulse 1.2s ease-in-out infinite; }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%,60%,100% { opacity: 0.2; transform: scale(0.9); } 30% { opacity: 1; transform: scale(1.1); } }
+    .profile-card { text-align: left; background: var(--paper2); border: 0.5px solid var(--border-strong); border-radius: 8px; padding: 1.25rem; max-width: 420px; margin: 0 auto; }
+    .profile-card-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0.75rem; }
+    .profile-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+    .profile-row:last-child { border-bottom: none; }
+    .pk { color: var(--ink3); font-family: 'DM Mono', monospace; }
+    .pv { color: var(--ink); font-weight: 500; text-align: right; max-width: 55%; }
+
+    .results-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border-strong); padding-bottom: 1.25rem; }
+    .results-header h2 { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 5px; }
+    .results-header p { font-size: 11px; color: var(--ink3); font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+
+    .filter-bar { display: flex; gap: 7px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .fbtn { font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 11px; border-radius: 99px; border: 0.5px solid var(--border-strong); background: transparent; color: var(--ink2); cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
+    .fbtn:hover { background: var(--paper3); }
+    .fbtn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+    .table-wrap { overflow-x: auto; border: 0.5px solid var(--border-strong); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    thead th { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); padding: 9px 11px; border-bottom: 0.5px solid var(--border-strong); background: var(--paper2); text-align: left; white-space: nowrap; }
+    tbody tr { border-bottom: 0.5px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover td { background: var(--paper2); }
+    td { padding: 11px 11px; vertical-align: top; color: var(--ink); }
+
+    .col-rank { text-align: center; width: 32px; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink3); }
+    .rg { color: #b8860b; font-size: 16px; }
+    .rs { color: #777; font-size: 16px; }
+    .rb { color: #8B4513; font-size: 16px; }
+
+    .car-name { font-family: 'Fraunces', serif; font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
+    .car-sub { font-size: 10px; color: var(--ink3); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+    .badge { display: inline-block; font-size: 9px; font-weight: 500; padding: 2px 8px; border-radius: 99px; white-space: nowrap; font-family: 'DM Mono', monospace; letter-spacing: 0.02em; }
+    .bg { background: var(--green-light); color: var(--green); }
+    .bb { background: var(--blue-light); color: var(--blue); }
+    .bp { background: var(--purple-light); color: var(--purple); }
+    .ba { background: var(--amber-light); color: var(--amber); }
+    .br { background: var(--red-light); color: var(--red); }
+
+    .match-wrap { display: flex; align-items: center; gap: 6px; }
+    .match-pct { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; min-width: 30px; }
+    .match-bar { flex: 1; height: 3px; background: var(--paper3); border-radius: 2px; overflow: hidden; }
+    .match-fill { height: 3px; border-radius: 2px; background: var(--accent); }
+
+    .why-text { font-size: 11px; color: var(--ink2); line-height: 1.55; }
+    .motor-text { font-size: 10px; color: var(--ink2); line-height: 1.5; }
+    .motor-line { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent); margin-top: 2px; letter-spacing: 0.02em; display: block; }
+    .pros-cons { font-size: 10px; line-height: 1.6; }
+    .pro { color: var(--green); display: block; }
+    .pro::before { content: '+ '; font-weight: 500; }
+    .con { color: var(--red); display: block; }
+    .con::before { content: '− '; font-weight: 500; }
+
+    .footer { margin-top: 1.5rem; font-size: 10px; color: var(--ink3); font-family: 'DM Mono', monospace; display: flex; gap: 1.5rem; flex-wrap: wrap; border-top: 0.5px solid var(--border); padding-top: 0.75rem; }
+    .btn-restart { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.05em; background: transparent; color: var(--accent); border: 0.5px solid var(--accent); padding: 7px 16px; border-radius: 4px; cursor: pointer; transition: all 0.15s; margin-top: 1.25rem; }
+    .btn-restart:hover { background: var(--accent-light); }
+    .error-box { background: var(--red-light); border: 0.5px solid var(--red); border-radius: 8px; padding: 1rem 1.25rem; color: var(--red); font-size: 11px; font-family: 'DM Mono', monospace; margin-bottom: 1.25rem; white-space: pre-wrap; word-break: break-all; }
+
+    @media (max-width: 600px) {
+      .site-header { padding: 1rem 1rem 0.9rem; }
+      .main { padding: 1.5rem 1rem 3rem; }
+      .intro-big { font-size: 24px; }
+      .options-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const QUESTIONS = [
+      {
+        id: "uso", label: "Pregunta 1 de 7",
+        text: "¿Para qué vas a usar el auto principalmente?",
+        sub: "Elige la que más describe tu día a día",
+        type: "options", cols: 2,
+        options: [
+          { icon: "🏙️", title: "Ciudad todos los días", desc: "Trabajo, trámites, supermercado" },
+          { icon: "🛣️", title: "Mucha carretera", desc: "Viajes, trabajo en regiones" },
+          { icon: "⚖️", title: "Mixto parejo", desc: "Ciudad y carretera similar" },
+          { icon: "👨‍👩‍👧", title: "Familia numerosa", desc: "Espacio, viajes largos con niños" },
+        ]
+      },
+      {
+        id: "presupuesto", label: "Pregunta 2 de 7",
+        text: "¿Cuánto tienes disponible para el auto?",
+        sub: "Precio total en millones de pesos chilenos (CLP)",
+        type: "range", min: 4, max: 40, step: 1, defaultVal: 12,
+        format: v => `$${v}M CLP`, rangeLow: "$4M", rangeHigh: "$40M"
+      },
+      {
+        id: "prioridad", label: "Pregunta 3 de 7",
+        text: "¿Qué es lo más importante para ti en un auto?",
+        sub: "Elige solo una — la que más te pesa al decidir",
+        type: "options", cols: 2,
+        options: [
+          { icon: "⛽", title: "Consumo de combustible", desc: "Gastar lo menos posible en bencina" },
+          { icon: "🔧", title: "Bajo costo de mantención", desc: "Repuestos baratos, pocas fallas" },
+          { icon: "📐", title: "Espacio y comodidad", desc: "Amplio, cómodo, maletero grande" },
+          { icon: "⚡", title: "Potencia y conducción", desc: "Que sea entretenido de manejar" },
+          { icon: "💎", title: "Imagen y diseño", desc: "Que se vea bien, interiores finos" },
+          { icon: "🛡️", title: "Confiabilidad total", desc: "Que nunca falle, fácil de reparar" },
+        ]
+      },
+      {
+        id: "nuevo_usado", label: "Pregunta 4 de 7",
+        text: "¿Nuevo, seminuevo o usado?",
+        sub: "Cada opción tiene sus ventajas reales",
+        type: "options", cols: 3,
+        options: [
+          { icon: "✨", title: "Nuevo", desc: "Garantía total, 0 km" },
+          { icon: "🔄", title: "Seminuevo", desc: "1–4 años, como nuevo pero más barato" },
+          { icon: "🕰️", title: "Usado", desc: "5+ años, más auto por la plata" },
+        ]
+      },
+      {
+        id: "zona", label: "Pregunta 5 de 7",
+        text: "¿Dónde vas a usar y mantener el auto?",
+        sub: "Importa para saber qué redes de servicio tienes cerca",
+        type: "options", cols: 2,
+        options: [
+          { icon: "🏛️", title: "Santiago / Gran Santiago", desc: "Acceso a todos los talleres y repuestos" },
+          { icon: "🌊", title: "V Región (Valpo / Viña)", desc: "Red de servicio mediana" },
+          { icon: "🌄", title: "Región con ciudad grande", desc: "Concepción, La Serena, Temuco…" },
+          { icon: "🏔️", title: "Ciudad pequeña o campo", desc: "Acceso limitado a talleres especializados" },
+        ]
+      },
+      {
+        id: "experiencia", label: "Pregunta 6 de 7",
+        text: "¿Cuánta experiencia tienes manejando?",
+        sub: "Sin juicio — solo para saber qué tan fácil debe ser el auto",
+        type: "options", cols: 2,
+        options: [
+          { icon: "🆕", title: "Recién saqué la licencia", desc: "Necesito algo fácil y perdonador" },
+          { icon: "📅", title: "Pocos años manejando", desc: "Me defiendo pero no soy experto" },
+          { icon: "✅", title: "Manejo con confianza", desc: "Varios años de experiencia" },
+          { icon: "🏁", title: "Manejo experto", desc: "Disfruto conducir, me gusta el control" },
+        ]
+      },
+      {
+        id: "estilo", label: "Pregunta 7 de 7",
+        text: "¿Cómo describes tu estilo de vida?",
+        sub: "Ayuda a entender qué tipo de auto encaja contigo como persona",
+        type: "options", cols: 2,
+        options: [
+          { icon: "🏡", title: "Práctico y familiar", desc: "Funcionalidad primero, sin excentricidades" },
+          { icon: "💼", title: "Profesional / ejecutivo", desc: "Imagen importa, me muevo por negocios" },
+          { icon: "🏄", title: "Activo y aventurero", desc: "Deporte, viajes, campo o playa" },
+          { icon: "🎨", title: "Con personalidad propia", desc: "Me gusta destacar, auto con carácter" },
+        ]
+      }
+    ];
+
+    const VERDICTS = { green: "bg", blue: "bb", purple: "bp", amber: "ba", red: "br" };
+    const VERDICT_LABELS = { green: "Muy recomendado", blue: "Buena opción", purple: "A considerar", amber: "Con reservas", red: "Poco recomendado" };
+    const LABEL_MAP = { uso:"Uso principal", presupuesto:"Presupuesto", prioridad:"Prioridad #1", nuevo_usado:"Condición", zona:"Zona", experiencia:"Experiencia", estilo:"Estilo de vida" };
+
+    function App() {
+      const [phase, setPhase] = useState("intro");
+      const [currentQ, setCurrentQ] = useState(0);
+      const [answers, setAnswers] = useState({});
+      const [rangeVal, setRangeVal] = useState(12);
+      const [selected, setSelected] = useState(null);
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
+      const [filter, setFilter] = useState("all");
+
+      const q = QUESTIONS[currentQ];
+      const progress = phase === "intro" ? 0 : phase === "loading" || phase === "results" ? 100 : ((currentQ + 1) / QUESTIONS.length) * 100;
+
+      function startQuiz() {
+        setCurrentQ(0); setAnswers({}); setSelected(null); setRangeVal(12); setPhase("questions");
+      }
+
+      function selectOption(title) {
+        setSelected(title);
+        setAnswers(a => ({ ...a, [q.id]: title }));
+      }
+
+      function goNext() {
+        const newAnswers = q.type === "range" ? { ...answers, [q.id]: String(rangeVal) } : answers;
+        if (currentQ < QUESTIONS.length - 1) {
+          setAnswers(newAnswers);
+          const next = QUESTIONS[currentQ + 1];
+          setSelected(newAnswers[next.id] ?? null);
+          if (next.type === "range") setRangeVal(parseInt(newAnswers[next.id] ?? next.defaultVal));
+          setCurrentQ(currentQ + 1);
+        } else {
+          setAnswers(newAnswers);
+          generate(newAnswers);
+        }
+      }
+
+      function goBack() {
+        const prev = QUESTIONS[currentQ - 1];
+        setSelected(answers[prev.id] ?? null);
+        if (prev.type === "range") setRangeVal(parseInt(answers[prev.id] ?? prev.defaultVal));
+        setCurrentQ(currentQ - 1);
+      }
+
+      async function generate(ans) {
+        setPhase("loading"); setError(null);
+        const profileText = `Uso principal: ${ans.uso}\nPresupuesto: $${ans.presupuesto}M CLP\nPrioridad principal: ${ans.prioridad}\nCondición del auto: ${ans.nuevo_usado}\nZona donde vive: ${ans.zona}\nExperiencia manejando: ${ans.experiencia}\nEstilo de vida: ${ans.estilo}`;
+        try {
+          const res = await fetch("/api/ranking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profileText })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+          setResult(data);
+          setFilter("all");
+          setPhase("results");
+        } catch (e) {
+          setError(e.message);
+          setPhase("results");
+        }
+      }
+
+      function restart() {
+        setPhase("intro"); setCurrentQ(0); setAnswers({}); setSelected(null); setResult(null); setError(null);
+      }
+
+      const canNext = q?.type === "range" ? true : !!selected;
+      const filteredAutos = result?.autos?.filter(a => {
+        if (filter === "all") return true;
+        if (filter === "green") return a.veredicto_clase === "green";
+        if (filter === "blue") return a.veredicto_clase === "blue";
+        if (filter === "amber") return a.veredicto_clase === "amber" || a.veredicto_clase === "purple";
+        if (filter === "red") return a.veredicto_clase === "red";
+        return true;
+      }) ?? [];
+
+      return (
+        <div className="wrap">
+          <div className="site-header">
+            <div>
+              <h1>¿Qué Compro?</h1>
+              <p>Ranking personalizado de autos · Chile · 2024–2025</p>
+            </div>
+            <span className="step-counter">
+              {phase === "questions" ? `Pregunta ${currentQ + 1} de ${QUESTIONS.length}` : phase === "loading" ? "Generando ranking…" : ""}
+            </span>
+          </div>
+          <div className="progress-wrap"><div className="progress-fill" style={{ width: progress + "%" }} /></div>
+
+          <div className="main">
+            {phase === "intro" && (
+              <div>
+                <p className="intro-big">¿Necesitas un auto<br />pero <em>no sabes</em><br />por dónde empezar?</p>
+                <p className="intro-lead">Te hacemos 7 preguntas simples. Sin tecnicismos. Sin jerga automotriz. Al final, recibes un ranking personalizado con los mejores autos para ti, explicado en lenguaje humano.</p>
+                <div className="intro-items">
+                  {["7 preguntas · menos de 3 minutos","Ranking generado con IA según tu perfil exacto","Pros, contras y por qué encaja contigo","Contexto Chile: repuestos, redes, precios reales"].map(t => (
+                    <div key={t} className="intro-item"><div className="intro-dot" /><span>{t}</span></div>
+                  ))}
+                </div>
+                <button className="btn-primary" onClick={startQuiz}>Empezar →</button>
+              </div>
+            )}
+
+            {phase === "questions" && q && (
+              <div>
+                <p className="q-label">{q.label}</p>
+                <p className="q-text">{q.text}</p>
+                <p className="q-sub">{q.sub}</p>
+                {q.type === "options" && (
+                  <div className={"options-grid" + (q.cols === 3 ? " cols-3" : "")}>
+                    {q.options.map(opt => (
+                      <button key={opt.title} className={"option-btn" + (selected === opt.title ? " sel" : "")} onClick={() => selectOption(opt.title)}>
+                        <span className="opt-icon">{opt.icon}</span>
+                        <span className="opt-title">{opt.title}</span>
+                        <span className="opt-desc">{opt.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {q.type === "range" && (
+                  <div className="range-wrap">
+                    <div className="range-val">{q.format(rangeVal)}</div>
+                    <input type="range" min={q.min} max={q.max} step={q.step} value={rangeVal} onChange={e => setRangeVal(parseInt(e.target.value))} />
+                    <div className="range-labels"><span>{q.rangeLow}</span><span>{q.rangeHigh}</span></div>
+                  </div>
+                )}
+                <div className="btn-row">
+                  {currentQ > 0 && <button className="btn-ghost" onClick={goBack}>← Volver</button>}
+                  <button className="btn-primary" onClick={goNext} disabled={!canNext}>
+                    {currentQ === QUESTIONS.length - 1 ? "Ver mi ranking →" : "Continuar →"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {phase === "loading" && (
+              <div className="loading-wrap">
+                <p className="loading-title">Analizando tu perfil…</p>
+                <p className="loading-sub">Generando ranking personalizado con IA</p>
+                <div className="dots"><span /><span /><span /></div>
+                <div className="profile-card">
+                  <div className="profile-card-title">Tu perfil</div>
+                  {Object.entries(answers).map(([k, v]) => (
+                    <div key={k} className="profile-row">
+                      <span className="pk">{LABEL_MAP[k]}</span>
+                      <span className="pv">{k === "presupuesto" ? `$${v}M CLP` : v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {phase === "results" && (
+              <div>
+                <div className="results-header">
+                  <h2>{result?.titulo ?? "Error al generar ranking"}</h2>
+                  <p>{result?.subtitulo ?? "Revisa el detalle del error más abajo"}</p>
+                </div>
+                {error && <div className="error-box">{error}</div>}
+                {result && (
+                  <>
+                    <div className="filter-bar">
+                      {[["all","Todos"],["green","Muy recomendados"],["blue","Buenas opciones"],["amber","Con reservas"],["red","Poco recomendados"]].map(([k, label]) => (
+                        <button key={k} className={"fbtn" + (filter === k ? " active" : "")} onClick={() => setFilter(k)}>{label}</button>
+                      ))}
+                    </div>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>#</th><th>Auto</th><th>Veredicto</th><th>Match</th>
+                            <th>Por qué encaja contigo</th><th>Motorizaciones</th><th>Consumo</th><th>Pros / Contras</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredAutos.map((auto, i) => {
+                            const origIdx = result.autos.indexOf(auto);
+                            const rankCls = origIdx === 0 ? "rg" : origIdx === 1 ? "rs" : origIdx === 2 ? "rb" : "";
+                            const rankSym = origIdx === 0 ? "①" : origIdx === 1 ? "②" : origIdx === 2 ? "③" : auto.rank;
+                            const vcls = auto.veredicto_clase || "blue";
+                            const pct = auto.match_pct || 75;
+                            return (
+                              <tr key={i}>
+                                <td className={"col-rank " + rankCls}>{rankSym}</td>
+                                <td><div className="car-name">{auto.nombre}</div><div className="car-sub">{auto.generacion}</div></td>
+                                <td><span className={"badge " + (VERDICTS[vcls] || "bb")}>{auto.veredicto || VERDICT_LABELS[vcls]}</span></td>
+                                <td>
+                                  <div className="match-wrap">
+                                    <span className="match-pct">{pct}%</span>
+                                    <div className="match-bar"><div className="match-fill" style={{ width: pct + "%" }} /></div>
+                                  </div>
+                                </td>
+                                <td className="why-text">{auto.razon}</td>
+                                <td className="motor-text">{auto.motorizacion}<span className="motor-line">{auto.motor_linea}</span></td>
+                                <td className="motor-text">
+                                  {auto.consumo_ciudad && <span>Ciudad: {auto.consumo_ciudad}<br /></span>}
+                                  {auto.consumo_ruta && <span>Ruta: {auto.consumo_ruta}</span>}
+                                </td>
+                                <td className="pros-cons">
+                                  {(auto.pros || []).map((p, j) => <span key={j} className="pro">{p}</span>)}
+                                  {(auto.contras || []).map((c, j) => <span key={j} className="con">{c}</span>)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="footer">
+                      <span>★ Ranking generado con IA · Chile 2024–2025</span>
+                      <span>· Consumos en km/L estimado ciclo mixto real</span>
+                    </div>
+                  </>
+                )}
+                <button className="btn-restart" onClick={restart}>← Hacer de nuevo</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
