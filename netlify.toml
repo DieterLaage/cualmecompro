@@ -1,6 +1,9 @@
 [build]
-  publish = "public"
-  functions = "netlify/functions"
+  command = "npm --prefix frontend install && npm --prefix frontend run build"
+  publish = "frontend/dist"
+
+[functions]
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/api/ranking"
