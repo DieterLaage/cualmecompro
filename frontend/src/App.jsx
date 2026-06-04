@@ -739,8 +739,8 @@ export default function App() {
                         <td>
                           <div className="motor-info">{auto.motor_disponible}</div>
                           <div className="consumo-tags">
-                            {auto.consumo_ciudad && <span className="consumo-tag" style={{ color: "var(--ink2)" }}>🏙️ {auto.consumo_ciudad}</span>}
-                            {auto.consumo_ruta && <span className="consumo-tag" style={{ color: "var(--ink3)" }}>🛣️ {auto.consumo_ruta}</span>}
+                            {auto.consumo_ciudad && <span className="consumo-tag" style={{ color: "var(--ink2)" }}>Ciudad: {auto.consumo_ciudad}</span>}
+                            {auto.consumo_ruta && <span className="consumo-tag" style={{ color: "var(--ink3)" }}>Ruta: {auto.consumo_ruta}</span>}
                           </div>
                         </td>
                         <td className="pros-cons">
