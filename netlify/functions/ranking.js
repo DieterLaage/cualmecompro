@@ -43,6 +43,7 @@ Reglas:
 - pros y contras: 2-4 items como strings simples
 - Considera: redes de servicio por zona, disponibilidad repuestos, precio mercado chileno
 - Consumo expresado en km/L (kilómetros por litro), NO en L/100km
+- Debes extraer la informacion de sitios confiables para los datos tecnicos del vehiculo, para los comentarios descriptivos puedes inlcuir sitios de reseñas y opiniones.
 - Lenguaje español chileno directo y profesional`;
 
   try {
