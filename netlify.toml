@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/ranking"
+  to = "/.netlify/functions/ranking"
+  status = 200
