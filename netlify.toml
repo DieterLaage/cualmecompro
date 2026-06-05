@@ -10,3 +10,7 @@
   to = "/.netlify/functions/ranking"
   status = 200
   force = true
+
+[build]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist"
