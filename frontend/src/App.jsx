@@ -472,6 +472,8 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("Todos");
+  const [showCotizar, setShowCotizar] = useState(false);
+  const [cotizarEnviado, setCotizarEnviado] = useState(false);
 
   const q = QUESTIONS[step];
   const total = QUESTIONS.length;
@@ -492,8 +494,9 @@ export default function App() {
     if (step === 0) { setPhase("intro"); } else { setStep(s => s - 1); }
   }
 
-  function restart() {
+function restart() {
     setPhase("intro"); setStep(0); setAnswers({}); setResult(null); setError(null);
+    setShowCotizar(false); setCotizarEnviado(false);
   }
 
   async function submit() {
@@ -761,6 +764,39 @@ export default function App() {
     </div>
 
             <div className="results-actions">
+                    {/* ── COTIZAR ── */}
+                    {showCotizar ? (
+                      <div style={{marginTop:"28px", background:"var(--bg2)", borderRadius:"var(--radius)", padding:"28px 32px", border:"1px solid var(--border)"}}>
+                        <div style={{fontSize:".72rem", fontWeight:600, letterSpacing:".12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"12px"}}>Cotiza tu auto</div>
+                        <div style={{fontSize:"1.1rem", fontWeight:700, marginBottom:"20px", letterSpacing:"-0.01em"}}>
+                          Te contactamos con una concesionaria para el <span style={{color:"var(--accent)"}}>{result?.autos?.[0]?.nombre}</span>
+                        </div>
+                        {cotizarEnviado ? (
+                          <div style={{color:"var(--green)", fontWeight:600, fontSize:"1rem"}}>✓ ¡Listo! Te contactaremos pronto.</div>
+                        ) : (
+                          <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const fd = new FormData(e.target);
+                            fd.append("access_key", "f1803b80-2d28-4cce-a456-4e6e0f4d9e87");
+                            fd.append("subject", `Nuevo lead CualMeCompro — ${result?.autos?.[0]?.nombre}`);
+                            await fetch("https://api.web3forms.com/submit", { method:"POST", body: fd });
+                            setCotizarEnviado(true);
+                          }}>
+                            <input type="hidden" name="auto_interes" value={result?.autos?.[0]?.nombre} />
+                            <div style={{display:"flex", flexDirection:"column", gap:"10px", marginBottom:"16px"}}>
+                              <input name="nombre" required placeholder="Tu nombre" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
+                              <input name="telefono" required placeholder="Teléfono" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
+                              <input name="email" type="email" required placeholder="Email" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
+                            </div>
+                            <button type="submit" className="btn-primary">Quiero que me contacten →</button>
+                          </form>
+                        )}
+                      </div>
+                    ) : (
+                      <button className="btn-primary" style={{marginTop:"28px"}} onClick={() => setShowCotizar(true)}>
+                        🚗 Quiero cotizar el #{result?.autos?.[0]?.nombre} →
+                      </button>
+                    )}
               <button className="btn-ghost" onClick={goBack}>← Volver</button>
               <button className="btn-restart" onClick={restart}>Hacer de nuevo</button>
             </div>
