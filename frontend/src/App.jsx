@@ -257,7 +257,7 @@ const css = `
   .svg-opt-btn:hover { background: #ebebf0; border-color: var(--border); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.06); }
   .svg-opt-btn.selected { background: #e8f1fb; border-color: var(--accent); color: var(--accent); }
   .svg-opt-btn svg { width: 100%; max-width: 110px; height: 52px; }
-  .svg-opt-img { width: 100%; max-width: 140px; height: 90px; object-fit: contain; }
+  .svg-opt-img { width: 100%; max-width: 220px; height: 160px; object-fit: contain; }
   .svg-opt-title { font-family: var(--font-head); font-size: .85rem; font-weight: 600; color: var(--ink1); }
   .svg-opt-desc { font-size: .72rem; color: var(--ink3); }
 
@@ -607,7 +607,7 @@ function restart() {
                   >
                     {opt.img
                       ? <img src={opt.img} alt={opt.title} className="svg-opt-img" />
-                      : <span style={{ fontSize: "2.5rem" }}>🎯</span>
+                      : <span style={{ fontSize: "5rem", lineHeight: "120px", display:"block", textAlign:"center" }}>🎯</span>
                     }
                     <div className="svg-opt-title">{opt.title}</div>
                     <div className="svg-opt-desc">{opt.desc}</div>
