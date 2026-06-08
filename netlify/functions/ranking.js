@@ -8,7 +8,9 @@ exports.handler = async function(event) {
     "Content-Type": "application/json"
   };
 
-  const SYSTEM_PROMPT = `Eres un experto en el mercado automotriz chileno. Genera un ranking de autos personalizado según el perfil del usuario.
+  const SYSTEM_PROMPT = `
+  
+Eres un experto en el mercado automotriz chileno. Genera un ranking de autos personalizado según el perfil del usuario.
 
 Responde SOLO con JSON válido, sin texto adicional ni markdown. Formato exacto:
 
@@ -20,6 +22,7 @@ Responde SOLO con JSON válido, sin texto adicional ni markdown. Formato exacto:
       "rank": 1,
       "nombre": "Marca Modelo",
       "generacion": "año o generación relevante",
+      "precio": "$XX.000.000 CLP",
       "veredicto": "etiqueta corta",
       "veredicto_clase": "green",
       "match_pct": 95,
@@ -34,22 +37,24 @@ Responde SOLO con JSON válido, sin texto adicional ni markdown. Formato exacto:
   ]
 }
 
-Reglas:
+Instrucciones:
 - 7 a 10 autos ordenados de mejor a peor para este perfil
-- veredicto_clase: green=muy recomendado, blue=buena opción, purple=a considerar, amber=con reservas, red=poco recomendado
-- match_pct: entre 40 y 98
-- Usa modelos reales disponibles en Chile (usado o nuevo según presupuesto)
+- Veredicto_clase: green=muy recomendado, blue=buena opción, purple=a considerar, amber=con reservas, red=poco recomendado
+- Usa modelos reales disponibles en Chile, los nombres deben ser con los que se comercializan localmente en chile, es decir "Toyota Yaris" no "Toyota Vios" si ese es el nombre local, o "Kia Seltos" no "Kia Seltos 2024" si ese es el nombre local, etc.
 - La razón debe ser específica al perfil dado, no descripción genérica del auto
 - pros y contras: 2-4 items como strings simples
-- Considera: redes de servicio por zona, disponibilidad repuestos, precio mercado chileno
-- Consumo expresado en km/L (kilómetros por litro), NO en L/100km
+- Considera: redes de servicio por zona, disponibilidad repuestos, precio mercado chileno, valor de reventa, experiencia de manejo, seguridad, tecnología, etc. pero siempre con foco en el perfil del usuario.
+- Consumo expresado en km/L (kilómetros por litro), NO en L/100km, y debe ser el declarado por el fabricante para cada modelo, no estimaciones genéricas.
 - Debes extraer la informacion de sitios confiables para los datos tecnicos del vehiculo, para los comentarios descriptivos puedes inlcuir sitios de reseñas y opiniones.
-- El consumo de cada vehiculo debe ser el declarado por el fabricante.
-- Debes usar el nombre de las marcas y modelos en el mercado chilenmo.
-- Lenguaje español chileno directo y profesional`;
+- Lenguaje español chileno directo y profesional
+- Precio: precio de mercado chileno actual del modelo recomendado, formato "$xxx.xxx.xxx CLP". Solo incluye autos cuyo precio sea igual o menor al presupuesto del usuario. Si el auto tiene rango de precios, usa el precio más bajo disponible.
+Restricciones:
+- Si tienes dudas sobre algún dato técnico específico, inclúyelo con tu mejor estimación pero márcalo como aproximado en la razón. Es mejor un ranking con datos aproximados que un JSON vacío.
+- Si no estás seguro de un dato técnico específico (consumo, motor), ponlo como null. Pero SIEMPRE genera el ranking con los autos que mejor encajen.
+`;
 
   try {
-    const { profileText } = JSON.parse(event.body);
+    const { profileText, answers } = JSON.parse(event.body);
     if (!profileText) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "Falta profileText" }) };
     }
@@ -59,20 +64,30 @@ Reglas:
       return { statusCode: 500, headers, body: JSON.stringify({ error: "API key no configurada" }) };
     }
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 4000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: `Genera un ranking de autos para este usuario:\n\n${profileText}` }]
-      })
-    });
+const res = await fetch("https://api.anthropic.com/v1/messages", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey,
+    "anthropic-version": "2023-06-01",
+    "anthropic-beta": "prompt-caching-2024-07-31"
+  },
+  body: JSON.stringify({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4000,
+    system: [
+      {
+        type: "text",
+        text: SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" }
+      }
+    ],
+    messages: [{ 
+      role: "user", 
+      content: `Genera un ranking de autos para este usuario:\n\n${profileText}`
+    }]
+  })
+});
 
     if (!res.ok) {
       const err = await res.text();
@@ -90,6 +105,26 @@ Reglas:
       return { statusCode: 502, headers, body: JSON.stringify({ error: "La IA no devolvió JSON válido" }) };
     }
 
+    // Guardar log en Supabase
+    try {
+      const supaRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/interacciones`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": process.env.SUPABASE_KEY,
+          "Authorization": `Bearer ${process.env.SUPABASE_KEY}`,
+          "Prefer": "return=minimal"
+        },
+      body: JSON.stringify({
+        perfil: answers,
+        autos_recomendados: JSON.parse(match[0])
+      })
+      });
+      const supaText = await supaRes.text();
+      console.log("Supabase status:", supaRes.status, supaText);
+    } catch (logErr) {
+      console.error("Error guardando log:", logErr);
+    }
     return { statusCode: 200, headers, body: match[0] };
   } catch (e) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
