@@ -796,12 +796,12 @@ function restart() {
           fd.append("subject", `Nuevo lead CualMeCompro — ${autoSeleccionado}`);
           const res = await fetch("https://api.web3forms.com/submit", { method:"POST", body: fd });
           const data = await res.json();
-          await fetch("https://nxmrpddihztjhajndhwa.supabase.co/rest/v1/leads", {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/leads`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "apikey": "sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
-              "Authorization": "Bearer sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
+              "apikey": import.meta.env.VITE_SUPABASE_KEY,
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
               "Prefer": "return=minimal"
             },
             body: JSON.stringify({
