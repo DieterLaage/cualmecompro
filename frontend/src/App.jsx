@@ -771,85 +771,82 @@ function restart() {
       <a href="/terminos.html" style={{color:"var(--ink3)",fontSize:".75rem",textDecoration:"none"}}>Términos y privacidad</a>
     </div>
 
-            <div className="results-actions">
-                    {/* ── COTIZAR ── */}
-                    {showCotizar ? (
-                      <div ref={cotizarRef} style={{marginTop:"28px", background:"var(--bg2)", borderRadius:"var(--radius)", padding:"28px 32px", border:"1px solid var(--border)"}}>
-                        <div style={{fontSize:".72rem", fontWeight:600, letterSpacing:".12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"12px"}}>Cotiza tu auto</div>
-                        <div style={{fontSize:"1.1rem", fontWeight:700, marginBottom:"20px", letterSpacing:"-0.01em"}}>
-                          Te contactamos con una concesionaria para el <span style={{color:"var(--accent)"}}>{autoSeleccionado}</span>
-                        </div>
-                        {cotizarEnviado ? (
-                          <div style={{color:"var(--green)", fontWeight:600, fontSize:"1rem"}}>✓ ¡Listo! Te contactaremos pronto.</div>
-                        ) : (
-                          <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            const telefono = e.target.telefono.value.replace(/\s/g, "");
-                            if (!/^\+?[0-9]{8,15}$/.test(telefono)) {
-                              setCotizarError("Ingresa un teléfono válido (solo números, 8–15 dígitos).");
-                              return;
-                            }
-                            setCotizarError(false);
-                            setCotizarEnviando(true);
-                            try {
-                              const fd = new FormData(e.target);
-                              
-                              // Web3Forms (email)
-                              fd.append("access_key", "f1803b80-2d28-4cce-a456-4e6e0f4d9e87");
-                              fd.append("subject", `Nuevo lead CualMeCompro — ${autoSeleccionado}`);
-                              const res = await fetch("https://api.web3forms.com/submit", { method:"POST", body: fd });
-                              const data = await res.json();
+{/* ── COTIZAR ── */}
+{showCotizar ? (
+  <div ref={cotizarRef} style={{marginTop:"28px", background:"var(--bg2)", borderRadius:"var(--radius)", padding:"28px 32px", border:"1px solid var(--border)"}}>
+    <div style={{fontSize:".72rem", fontWeight:600, letterSpacing:".12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"12px"}}>Cotiza tu auto</div>
+    <div style={{fontSize:"1.1rem", fontWeight:700, marginBottom:"20px", letterSpacing:"-0.01em"}}>
+      Te contactamos con una concesionaria para el <span style={{color:"var(--accent)"}}>{autoSeleccionado}</span>
+    </div>
+    {cotizarEnviado ? (
+      <div style={{color:"var(--green)", fontWeight:600, fontSize:"1rem"}}>✓ ¡Listo! Te contactaremos pronto.</div>
+    ) : (
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        const telefono = e.target.telefono.value.replace(/\s/g, "");
+        if (!/^\+?[0-9]{8,15}$/.test(telefono)) {
+          setCotizarError("Ingresa un teléfono válido (solo números, 8–15 dígitos).");
+          return;
+        }
+        setCotizarError(false);
+        setCotizarEnviando(true);
+        try {
+          const fd = new FormData(e.target);
+          fd.append("access_key", "f1803b80-2d28-4cce-a456-4e6e0f4d9e87");
+          fd.append("subject", `Nuevo lead CualMeCompro — ${autoSeleccionado}`);
+          const res = await fetch("https://api.web3forms.com/submit", { method:"POST", body: fd });
+          const data = await res.json();
+          await fetch("https://nxmrpddihztjhajndhwa.supabase.co/rest/v1/leads", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": "sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
+              "Authorization": "Bearer sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
+              "Prefer": "return=minimal"
+            },
+            body: JSON.stringify({
+              nombre: fd.get("nombre"),
+              telefono: fd.get("telefono"),
+              email: fd.get("email"),
+              auto_interes: autoSeleccionado,
+              perfil: answers
+            })
+          });
+          if (data.success) {
+            setCotizarEnviado(true);
+          } else {
+            setCotizarError("No se pudo enviar. Intenta de nuevo.");
+          }
+        } catch {
+          setCotizarError("Error de conexión. Intenta de nuevo.");
+        } finally {
+          setCotizarEnviando(false);
+        }
+      }}>
+        <input type="hidden" name="auto_interes" value={autoSeleccionado} />
+        <div style={{display:"flex", flexDirection:"column", gap:"10px", marginBottom:"16px"}}>
+          <input name="nombre" required placeholder="Tu nombre" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font-body)", outline:"none"}} />
+          <input name="telefono" required placeholder="Teléfono (ej: +56912345678)" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font-body)", outline:"none"}} />
+          <input name="email" type="email" required placeholder="Email" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font-body)", outline:"none"}} />
+        </div>
+        {cotizarError && <div style={{color:"#e53e3e", fontSize:".85rem", marginBottom:"10px"}}>{cotizarError}</div>}
+        <button type="submit" className="btn-primary" disabled={cotizarEnviando}>
+          {cotizarEnviando ? "Enviando..." : "Quiero que me contacten →"}
+        </button>
+      </form>
+    )}
+  </div>
+) : null}
 
-                              // Supabase (base de datos)
-                              await fetch("https://nxmrpddihztjhajndhwa.supabase.co/rest/v1/leads", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  "apikey": "sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
-                                  "Authorization": "Bearer sb_publishable_-cAFJcH9IbsIZLd8mLhvpg_DTuH-rOX",
-                                  "Prefer": "return=minimal"
-                                },
-                                body: JSON.stringify({
-                                  nombre: fd.get("nombre"),
-                                  telefono: fd.get("telefono"),
-                                  email: fd.get("email"),
-                                  auto_interes: autoSeleccionado,
-                                  perfil: answers
-                                })
-                              });
-
-                              if (data.success) {
-                                setCotizarEnviado(true);
-                              } else {
-                                setCotizarError("No se pudo enviar. Intenta de nuevo.");
-                              }
-                            } catch {
-                              setCotizarError("Error de conexión. Intenta de nuevo.");
-                            } finally {
-                              setCotizarEnviando(false);
-                            }
-                          }}>
-                            <input type="hidden" name="auto_interes" value={autoSeleccionado} />
-                            <div style={{display:"flex", flexDirection:"column", gap:"10px", marginBottom:"16px"}}>
-                              <input name="nombre" required placeholder="Tu nombre" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
-                              <input name="telefono" required placeholder="Teléfono (ej: +56912345678)" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
-                              <input name="email" type="email" required placeholder="Email" style={{background:"#fff", border:"1.5px solid var(--border)", borderRadius:"12px", padding:"12px 16px", fontSize:".95rem", fontFamily:"var(--font)", outline:"none"}} />
-                            </div>
-                            {cotizarError && <div style={{color:"#e53e3e", fontSize:".85rem", marginBottom:"10px"}}>{cotizarError}</div>}
-                            <button type="submit" className="btn-primary" disabled={cotizarEnviando}>
-                              {cotizarEnviando ? "Enviando..." : "Quiero que me contacten →"}
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    ) : (
-                      <button className="btn-primary" style={{marginTop:"28px"}} onClick={() => setShowCotizar(true)}>
-                        🚗 Quiero cotizar el #{result?.autos?.[0]?.nombre} →
-                      </button>
-                    )}
-              <button className="btn-ghost" onClick={goBack}>← Volver</button>
-              <button className="btn-restart" onClick={restart}>Hacer de nuevo</button>
-            </div>
+<div style={{display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap", marginTop:"20px"}}>
+  {!showCotizar && (
+    <button className="btn-primary" onClick={() => setShowCotizar(true)}>
+      🚗 Cotizar un auto →
+    </button>
+  )}
+  <button className="btn-ghost" onClick={goBack}>← Volver</button>
+  <button className="btn-restart" onClick={restart}>Hacer de nuevo</button>
+</div>
           </div>
         )}
       </div>

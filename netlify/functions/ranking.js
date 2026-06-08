@@ -1,3 +1,5 @@
+if (!global.rateLimitMap) global.rateLimitMap = {};
+
 exports.handler = async function(event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
@@ -7,6 +9,22 @@ exports.handler = async function(event) {
     "Access-Control-Allow-Origin": "*",
     "Content-Type": "application/json"
   };
+
+  // Rate limiting
+  const clientIP = event.headers["x-forwarded-for"] || "unknown";
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxRequests = 5;
+
+  if (!global.rateLimitMap[clientIP]) {
+    global.rateLimitMap[clientIP] = { count: 1, start: now };
+  } else if (now - global.rateLimitMap[clientIP].start > windowMs) {
+    global.rateLimitMap[clientIP] = { count: 1, start: now };
+  } else if (global.rateLimitMap[clientIP].count >= maxRequests) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: "Demasiadas solicitudes. Espera un momento e intenta de nuevo." }) };
+  } else {
+    global.rateLimitMap[clientIP].count++;
+  }
 
   const SYSTEM_PROMPT = `
   
@@ -48,6 +66,7 @@ Instrucciones:
 - Debes extraer la informacion de sitios confiables para los datos tecnicos del vehiculo, para los comentarios descriptivos puedes inlcuir sitios de reseñas y opiniones.
 - Lenguaje español chileno directo y profesional
 - Precio: precio de mercado chileno actual del modelo recomendado, formato "$xxx.xxx.xxx CLP". Solo incluye autos cuyo precio sea igual o menor al presupuesto del usuario. Si el auto tiene rango de precios, usa el precio más bajo disponible.
+- CRÍTICO: El presupuesto del usuario es un límite MÁXIMO absoluto. NUNCA incluyas autos cuyo precio supere el presupuesto indicado.
 Restricciones:
 - Si tienes dudas sobre algún dato técnico específico, inclúyelo con tu mejor estimación pero márcalo como aproximado en la razón. Es mejor un ranking con datos aproximados que un JSON vacío.
 - Si no estás seguro de un dato técnico específico (consumo, motor), ponlo como null. Pero SIEMPRE genera el ranking con los autos que mejor encajen.
@@ -55,8 +74,13 @@ Restricciones:
 
   try {
     const { profileText, answers } = JSON.parse(event.body);
+    
+    // Validación de input
     if (!profileText) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "Falta profileText" }) };
+    }
+    if (profileText.length > 2000) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "Input demasiado largo" }) };
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -64,30 +88,30 @@ Restricciones:
       return { statusCode: 500, headers, body: JSON.stringify({ error: "API key no configurada" }) };
     }
 
-const res = await fetch("https://api.anthropic.com/v1/messages", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": apiKey,
-    "anthropic-version": "2023-06-01",
-    "anthropic-beta": "prompt-caching-2024-07-31"
-  },
-  body: JSON.stringify({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4000,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" }
-      }
-    ],
-    messages: [{ 
-      role: "user", 
-      content: `Genera un ranking de autos para este usuario:\n\n${profileText}`
-    }]
-  })
-});
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "prompt-caching-2024-07-31"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 4000,
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" }
+          }
+        ],
+        messages: [{ 
+          role: "user", 
+          content: `Genera un ranking de autos para este usuario. El presupuesto máximo es ABSOLUTO, no incluyas ningún auto que lo supere:\n\n${profileText}`
+        }]
+      })
+    });
 
     if (!res.ok) {
       const err = await res.text();
@@ -115,16 +139,17 @@ const res = await fetch("https://api.anthropic.com/v1/messages", {
           "Authorization": `Bearer ${process.env.SUPABASE_KEY}`,
           "Prefer": "return=minimal"
         },
-      body: JSON.stringify({
-        perfil: answers,
-        autos_recomendados: JSON.parse(match[0])
-      })
+        body: JSON.stringify({
+          perfil: answers,
+          autos_recomendados: JSON.parse(match[0])
+        })
       });
       const supaText = await supaRes.text();
       console.log("Supabase status:", supaRes.status, supaText);
     } catch (logErr) {
       console.error("Error guardando log:", logErr);
     }
+
     return { statusCode: 200, headers, body: match[0] };
   } catch (e) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
