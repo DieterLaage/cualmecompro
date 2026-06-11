@@ -114,6 +114,7 @@ export default function App() {
       setResult({ autos, profile: ans });
       setPhase("results");
       // Log a Supabase
+            console.log("META RECIBIDA:", metaData);
             if (metaData) {
               fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/interacciones`, {
                 method: "POST",
