@@ -73,7 +73,8 @@ export default function App() {
       const decoder = new TextDecoder();
       let fullText = "";
       let buffer = "";
-
+      let metaData = null;
+      
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -90,10 +91,14 @@ export default function App() {
               fullText += event.text;
               setStreamingText(fullText);
             }
+
+            if (event.type === "meta") {
+              metaData = event;
+            }
+
             if (event.type === "error") {
               throw new Error(event.message);
-            }
-          } catch (e) {
+            } catch (e) {
             if (e.message?.includes("Anthropic")) throw e;
           }
         }
@@ -108,7 +113,28 @@ export default function App() {
 
       setResult({ autos, profile: ans });
       setPhase("results");
-
+      // Log a Supabase
+            if (metaData) {
+              fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/interacciones`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: import.meta.env.VITE_SUPABASE_KEY,
+                  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
+                  Prefer: "return=minimal",
+                },
+                body: JSON.stringify({
+                  perfil: ans,
+                  ranking: data,
+                  modelo: metaData.modelo,
+                  tiempo_ms: metaData.tiempo_ms,
+                  tokens_input: metaData.tokens_input,
+                  tokens_output: metaData.tokens_output,
+                  tokens_cache: metaData.tokens_cache,
+                  precio_usd: metaData.precio_usd,
+                }),
+              }).catch(err => console.error("Log error:", err));
+            }
     } catch (e) {
       setError("⚠️ No pude generar el ranking. Verifica tu conexión e intenta de nuevo.");
       setPhase("results");
