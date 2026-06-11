@@ -99,7 +99,10 @@ export default function ResultsCard({ result, error, onBack, onRestart, answers 
 
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginTop: "20px" }}>
         {!showCotizar && (
-          <button className="btn-primary" onClick={() => setShowCotizar(true)}>
+          <button className="btn-primary" onClick={() => {
+            setAutoSeleccionado(null);
+            setShowCotizar(true);
+          }}>
             🚗 Cotizar un auto →
           </button>
         )}
