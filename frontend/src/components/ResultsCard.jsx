@@ -13,9 +13,11 @@ export default function ResultsCard({ result, error, onBack, onRestart, answers 
   const [showCotizar, setShowCotizar] = useState(false);
   const [autoSeleccionado, setAutoSeleccionado] = useState(null);
 
+  const veredictos = ["Todos", ...new Set(result?.autos?.map(a => a.veredicto).filter(Boolean))];
+
   const filteredAutos = result?.autos?.filter(a => {
     if (filter === "Todos") return true;
-    return a.veredicto?.toLowerCase().includes(filter.toLowerCase());
+    return a.veredicto === filter;
   }) || [];
 
   return (
@@ -24,7 +26,7 @@ export default function ResultsCard({ result, error, onBack, onRestart, answers 
       <div className="results-header">
         <div className="results-title">Tu ranking <span>personalizado</span></div>
         <div className="filter-bar">
-          {["Todos", "Muy recomendado", "Recomendado", "Considerar"].map(f => (
+          {veredictos.map(f => (
             <button
               key={f}
               className={`filter-btn ${filter === f ? "active" : ""}`}
