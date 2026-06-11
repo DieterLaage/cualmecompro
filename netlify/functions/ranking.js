@@ -168,8 +168,6 @@ export default async (req, context) => {
         }
       }
 
-      await writer.write(encoder.encode(sseEvent({ type: "done" })));
-
       // --- Log to Supabase ---
       if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
         try {
@@ -216,6 +214,8 @@ export default async (req, context) => {
       } catch (_) {}
     }
   })();
+
+  await writer.write(encoder.encode(sseEvent({ type: "done" })));
 
   return new Response(readable, {
     status: 200,
