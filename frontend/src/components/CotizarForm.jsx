@@ -56,27 +56,36 @@ export default function CotizarForm({ autoSeleccionado, answers }) {
   return (
     <div ref={ref} className="cotizar-box">
       <div className="cotizar-label">Cotiza tu auto</div>
-      <div className="cotizar-title">
-        Te contactamos con una concesionaria para el{" "}
-        <span style={{ color: "var(--accent)" }}>{autoSeleccionado}</span>
-      </div>
-      {enviado ? (
-        <div style={{ color: "var(--green)", fontWeight: 600, fontSize: "1rem" }}>
-          ✓ ¡Listo! Te contactaremos pronto.
+
+      {!autoSeleccionado ? (
+        <div className="cotizar-title">
+          Selecciona un auto usando el botón <strong>Cotizar</strong> en la tabla para continuar.
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          <input type="hidden" name="auto_interes" value={autoSeleccionado} />
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
-            <input name="nombre" required placeholder="Tu nombre" className="cotizar-input" />
-            <input name="telefono" required placeholder="Teléfono (ej: +56912345678)" className="cotizar-input" />
-            <input name="email" type="email" required placeholder="Email" className="cotizar-input" />
+        <>
+          <div className="cotizar-title">
+            Te contactamos con una concesionaria para el{" "}
+            <span style={{ color: "var(--accent)" }}>{autoSeleccionado}</span>
           </div>
-          {error && <div style={{ color: "#e53e3e", fontSize: ".85rem", marginBottom: "10px" }}>{error}</div>}
-          <button type="submit" className="btn-primary" disabled={enviando}>
-            {enviando ? "Enviando..." : "Quiero que me contacten →"}
-          </button>
-        </form>
+          {enviado ? (
+            <div style={{ color: "var(--green)", fontWeight: 600, fontSize: "1rem" }}>
+              ✓ ¡Listo! Te contactaremos pronto.
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <input type="hidden" name="auto_interes" value={autoSeleccionado} />
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
+                <input name="nombre" required placeholder="Tu nombre" className="cotizar-input" />
+                <input name="telefono" required placeholder="Teléfono (ej: +56912345678)" className="cotizar-input" />
+                <input name="email" type="email" required placeholder="Email" className="cotizar-input" />
+              </div>
+              {error && <div style={{ color: "#e53e3e", fontSize: ".85rem", marginBottom: "10px" }}>{error}</div>}
+              <button type="submit" className="btn-primary" disabled={enviando}>
+                {enviando ? "Enviando..." : "Quiero que me contacten →"}
+              </button>
+            </form>
+          )}
+        </>
       )}
     </div>
   );
