@@ -1,33 +1,4 @@
-if (!global.rateLimitMap) global.rateLimitMap = {};
-
-exports.handler = async function(event) {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
-  }
-
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Content-Type": "application/json"
-  };
-
-  // Rate limiting
-  const clientIP = event.headers["x-forwarded-for"] || "unknown";
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const maxRequests = 5;
-
-  if (!global.rateLimitMap[clientIP]) {
-    global.rateLimitMap[clientIP] = { count: 1, start: now };
-  } else if (now - global.rateLimitMap[clientIP].start > windowMs) {
-    global.rateLimitMap[clientIP] = { count: 1, start: now };
-  } else if (global.rateLimitMap[clientIP].count >= maxRequests) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: "Demasiadas solicitudes. Espera un momento e intenta de nuevo." }) };
-  } else {
-    global.rateLimitMap[clientIP].count++;
-  }
-
-  const SYSTEM_PROMPT = `
-Eres el motor de recomendación de CualMeCompro, una plataforma chilena que ayuda a personas comunes a elegir bien su auto. Tu conocimiento del mercado automotriz chileno es profundo: modelos comercializados localmente, redes de servicio, disponibilidad de repuestos, valor de reventa y reputación de cada marca en Chile.
+const SYSTEM_PROMPT = `Eres el motor de recomendación de CualMeCompro, una plataforma chilena que ayuda a personas comunes a elegir bien su auto. Tu conocimiento del mercado automotriz chileno es profundo: modelos comercializados localmente, redes de servicio, disponibilidad de repuestos, valor de reventa y reputación de cada marca en Chile.
 
 ## SALIDA
 
@@ -62,7 +33,7 @@ Responde ÚNICAMENTE con JSON válido. Sin texto antes ni después, sin markdown
 - El presupuesto del usuario es un límite MÁXIMO absoluto. NUNCA incluyas un auto cuyo precio estimado lo supere.
 - Si el auto tiene rango de precios, usa la versión de entrada (la más barata).
 - Si con el presupuesto solo existen 4-6 opciones razonables, entrega esas 4-6. Un ranking corto y honesto vale más que uno relleno con malas opciones. Mínimo absoluto: 4 autos.
-- Si el presupuesto hace imposible cumplir el perfil completo (ej: SUV híbrido nuevo con $8.000.000), recomienda las alternativas más cercanas posibles y explica el ajuste en el "subtitulo" (ej: "Con tu presupuesto, estas son las opciones que más se acercan a lo que buscas").
+- Si el presupuesto hace imposible cumplir el perfil completo (ej: SUV híbrido nuevo con $8.000.000), recomienda las alternativas más cercanas posibles y explica el ajuste en el "subtitulo".
 
 ### Nuevo vs. usado
 - Si el usuario busca AUTO NUEVO: recomienda solo modelos actualmente a la venta en concesionarios chilenos. "generacion" = año modelo vigente (ej: "2025"). "precio" = precio de lista de la versión de entrada.
@@ -89,27 +60,27 @@ El ranking se ordena por match_pct descendente. Los valores deben ser coherentes
 
 ### Honestidad sobre datos técnicos
 Trabajas solo con tu conocimiento entrenado; no tienes acceso a internet ni a listas de precios en vivo. Por lo tanto:
-- Consumo (ciudad y ruta): entrega tu mejor estimación basada en las cifras declaradas por el fabricante que conoces, en km/L (NUNCA L/100km), como un solo valor por campo (ej: "14 km/L"). Si no tienes ninguna referencia confiable para ese modelo, usa null en ese campo. Nunca inventes una cifra sin base.
-- Precio: entrega tu mejor estimación del precio de mercado chileno, redondeada (ej: "$18.990.000 CLP"). Los precios cambian, así que prefiere estimaciones conservadoras (levemente hacia arriba) para no romper la regla del presupuesto.
+- Consumo (ciudad y ruta): entrega tu mejor estimación basada en las cifras declaradas por el fabricante que conoces, en km/L (NUNCA L/100km), como un solo valor por campo (ej: "14 km/L"). Si no tienes ninguna referencia confiable para ese modelo, usa null en ese campo.
+- Precio: entrega tu mejor estimación del precio de mercado chileno, redondeada. Los precios cambian, así que prefiere estimaciones conservadoras (levemente hacia arriba) para no romper la regla del presupuesto.
 - Esta regla de null aplica SOLO a consumo_ciudad y consumo_ruta. Todos los demás campos son siempre obligatorios.
 - SIEMPRE genera el ranking completo. Un dato técnico faltante jamás justifica omitir un auto que encaja con el perfil.
 
 ### Nombres locales
-Usa exclusivamente los nombres con que cada modelo se comercializa en Chile (ej: "Toyota Yaris", no "Toyota Vios"; "Chevrolet Sail", no su nombre en otro mercado). Sin años ni versiones en el campo "nombre".
+Usa exclusivamente los nombres con que cada modelo se comercializa en Chile. Sin años ni versiones en el campo "nombre".
 
 ## REGLAS DE CONTENIDO
 
 ### La razón
-"razon" debe conectar el auto con ESTE perfil específico: menciona al menos un dato concreto del usuario (su uso, su zona, su presupuesto, su prioridad). Prohibido el texto genérico tipo "es un auto confiable y eficiente". Test: si la razón sirviera igual para otro usuario distinto, está mal escrita.
+"razon" debe conectar el auto con ESTE perfil específico: menciona al menos un dato concreto del usuario. Prohibido el texto genérico. Test: si la razón sirviera igual para otro usuario distinto, está mal escrita.
 
 ### Pros y contras
 - pros: 2-4 strings cortos, relevantes para este perfil.
-- contras: 2-3 strings cortos y HONESTOS. Todo auto tiene contras; nunca entregues una lista de contras vacía o cosmética. Si el contra es relevante para la prioridad principal del usuario, dilo sin suavizarlo.
+- contras: 2-3 strings cortos y HONESTOS. Todo auto tiene contras; nunca entregues una lista de contras vacía o cosmética.
 
 ### Tono
-Español chileno directo, cercano y sin jerga técnica innecesaria. Como un amigo que sabe de autos y te dice las cosas como son. Ejemplo del tono buscado: "Para tus viajes a la nieve este motor anda justo, pero en ciudad te va a rendir bacán y la mantención es barata en cualquier taller." Evita lenguaje de folleto comercial.
+Español chileno directo, cercano y sin jerga técnica innecesaria. Como un amigo que sabe de autos y te dice las cosas como son.
 
-## EJEMPLO DE UN ELEMENTO DEL ARRAY (referencia de formato y tono)
+## EJEMPLO DE UN ELEMENTO DEL ARRAY
 
 {
   "rank": 1,
@@ -128,86 +99,231 @@ Español chileno directo, cercano y sin jerga técnica innecesaria. Como un amig
   "contras": ["Maletero chico para viajes largos", "Motor justo con el auto lleno en subida"]
 }`;
 
-  try {
-    const { profileText, answers } = JSON.parse(event.body);
-    
-    // Validación de input
-    if (!profileText) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Falta profileText" }) };
-    }
-    if (profileText.length > 2000) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Input demasiado largo" }) };
-    }
+// --- Rate limiting ---
+const rateLimit = new Map();
+const RATE_LIMIT = 5;
+const RATE_WINDOW = 60000;
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return { statusCode: 500, headers, body: JSON.stringify({ error: "API key no configurada" }) };
-    }
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimit.get(ip) || { count: 0, start: now };
+  if (now - record.start > RATE_WINDOW) {
+    record.count = 1;
+    record.start = now;
+  } else {
+    record.count++;
+  }
+  rateLimit.set(ip, record);
+  return record.count <= RATE_LIMIT;
+}
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "prompt-caching-2024-07-31"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 4000,
-        system: [
-          {
-            type: "text",
-            text: SYSTEM_PROMPT,
-            cache_control: { type: "ephemeral" }
-          }
-        ],
-        messages: [{ 
-          role: "user", 
-          content: `Genera un ranking de autos para este usuario. El presupuesto máximo es ABSOLUTO, no incluyas ningún auto que lo supere:\n\n${profileText}`
-        }]
-      })
+// --- Helpers ---
+function sseEvent(data) {
+  return `data: ${JSON.stringify(data)}\n\n`;
+}
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+// --- Main handler (Netlify Functions v2) ---
+export default async (req, context) => {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Método no permitido" }), {
+      status: 405,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });
+  }
 
-    if (!res.ok) {
-      const err = await res.text();
-      return { statusCode: 502, headers, body: JSON.stringify({ error: `Anthropic error ${res.status}: ${err.substring(0, 200)}` }) };
-    }
+  // Rate limit
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || context.ip || "unknown";
+  if (!checkRateLimit(ip)) {
+    return new Response(JSON.stringify({ error: "Demasiadas solicitudes. Intenta en 1 minuto." }), {
+      status: 429,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    });
+  }
 
-    const data = await res.json();
-    const textBlock = data.content?.find(b => b.type === "text");
-    if (!textBlock?.text) {
-      return { statusCode: 502, headers, body: JSON.stringify({ error: "Sin respuesta de la IA" }) };
-    }
+  // Parse body
+  let profileText, answers;
+  try {
+    const body = await req.json();
+    profileText = body.profileText;
+    answers = body.answers;
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "Body inválido" }), {
+      status: 400,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    });
+  }
 
-    const match = textBlock.text.match(/\{[\s\S]*\}/);
-    if (!match) {
-      return { statusCode: 502, headers, body: JSON.stringify({ error: "La IA no devolvió JSON válido" }) };
-    }
+  if (!profileText) {
+    return new Response(JSON.stringify({ error: "Falta profileText" }), {
+      status: 400,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    });
+  }
+  if (profileText.length > 2000) {
+    return new Response(JSON.stringify({ error: "Input demasiado largo" }), {
+      status: 400,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    });
+  }
 
-    // Guardar log en Supabase
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "API key no configurada" }), {
+      status: 500,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    });
+  }
+
+  // --- Stream response ---
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  // Fire and forget the async streaming work
+  (async () => {
+    let fullText = "";
+
     try {
-      const supaRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/interacciones`, {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": process.env.SUPABASE_KEY,
-          "Authorization": `Bearer ${process.env.SUPABASE_KEY}`,
-          "Prefer": "return=minimal"
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-beta": "prompt-caching-2024-07-31",
         },
         body: JSON.stringify({
-          perfil: answers,
-          autos_recomendados: JSON.parse(match[0])
-        })
+          model: "claude-sonnet-4-6",
+          max_tokens: 4000,
+          stream: true,
+          system: [
+            {
+              type: "text",
+              text: SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
+          messages: [
+            {
+              role: "user",
+              content: `Genera un ranking de autos para este usuario. El presupuesto máximo es ABSOLUTO, no incluyas ningún auto que lo supere:\n\n${profileText}`,
+            },
+          ],
+        }),
       });
-      const supaText = await supaRes.text();
-      console.log("Supabase status:", supaRes.status, supaText);
-    } catch (logErr) {
-      console.error("Error guardando log:", logErr);
-    }
 
-    return { statusCode: 200, headers, body: match[0] };
-  } catch (e) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
-  }
+      if (!res.ok) {
+        const errText = await res.text();
+        await writer.write(encoder.encode(sseEvent({ type: "error", message: `Anthropic ${res.status}: ${errText.substring(0, 200)}` })));
+        await writer.close();
+        return;
+      }
+
+      // Read the Anthropic SSE stream
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // Keep the incomplete last line
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+
+          try {
+            const event = JSON.parse(data);
+
+            if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+              const text = event.delta.text;
+              fullText += text;
+              // Forward each chunk to the client
+              await writer.write(encoder.encode(sseEvent({ type: "chunk", text })));
+            }
+
+            // Log usage info (optional, for debugging cache hits)
+            if (event.type === "message_start" && event.message?.usage) {
+              console.log("Usage:", JSON.stringify(event.message.usage));
+            }
+            if (event.type === "message_delta" && event.usage) {
+              console.log("Final usage:", JSON.stringify(event.usage));
+            }
+          } catch (e) {
+            // Skip unparseable lines
+          }
+        }
+      }
+
+      // Send the complete signal with full text
+      await writer.write(encoder.encode(sseEvent({ type: "done" })));
+
+      // --- Log to Supabase (fire and forget) ---
+      if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+        try {
+          const match = fullText.match(/\{[\s\S]*\}/);
+          if (match) {
+            await fetch(`${process.env.SUPABASE_URL}/rest/v1/interacciones`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                apikey: process.env.SUPABASE_KEY,
+                Authorization: `Bearer ${process.env.SUPABASE_KEY}`,
+                Prefer: "return=minimal",
+              },
+              body: JSON.stringify({
+                perfil: answers,
+                autos_recomendados: JSON.parse(match[0]),
+              }),
+            });
+          }
+        } catch (logErr) {
+          console.error("Supabase log error:", logErr);
+        }
+      }
+    } catch (e) {
+      console.error("Stream error:", e);
+      try {
+        await writer.write(encoder.encode(sseEvent({ type: "error", message: e.message })));
+      } catch (_) {}
+    } finally {
+      try {
+        await writer.close();
+      } catch (_) {}
+    }
+  })();
+
+  // Return the readable stream immediately (avoids timeout)
+  return new Response(readable, {
+    status: 200,
+    headers: {
+      ...corsHeaders(),
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
+};
+
+// Netlify Functions v2 config
+export const config = {
+  path: "/.netlify/functions/ranking",
 };

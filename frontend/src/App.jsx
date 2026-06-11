@@ -465,6 +465,7 @@ const css = `
 `;
 
 export default function App() {
+  const [streamingText, setStreamingText] = useState("");
   const [phase, setPhase] = useState("intro"); // intro | quiz | loading | results
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -502,7 +503,7 @@ function restart() {
     setAutoSeleccionado(null);
   }
 
-  async function submit() {
+async function submit() {
     const ans = answers;
     const profileText = [
       `Tipo de carrocería preferida: ${ans.carroceria}`,
@@ -516,6 +517,7 @@ function restart() {
 
     setPhase("loading");
     setError(null);
+    setStreamingText("");
 
     try {
       const res = await fetch("/api/ranking", {
@@ -523,17 +525,61 @@ function restart() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profileText, answers }),
       });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const data = await res.json();
-      // ranking.js puede devolver { autos: [...] } o { titulo, subtitulo, autos: [...] }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+
+            if (event.type === "chunk") {
+              fullText += event.text;
+              setStreamingText(fullText);
+            }
+
+            if (event.type === "error") {
+              throw new Error(event.message);
+            }
+          } catch (e) {
+            if (e.message?.includes("Anthropic")) throw e;
+          }
+        }
+      }
+
+      // Stream terminó — parsear el JSON completo
+      const match = fullText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("La IA no devolvió JSON válido");
+
+      const data = JSON.parse(match[0]);
       const autos = data.autos || [];
       if (!autos.length) throw new Error("Sin resultados");
+
       setResult({ autos, profile: ans });
       setPhase("results");
+
     } catch (e) {
       setError("⚠️ No pude generar el ranking. Verifica tu conexión e intenta de nuevo.");
       setPhase("results");
       setResult({ autos: [], profile: ans });
+    } finally {
+      setStreamingText("");
     }
   }
 
@@ -694,6 +740,58 @@ function restart() {
                   ))}
                 </div>
               </div>
+              {streamingText && (
+                <div style={{
+                  width: "100%",
+                  marginTop: "16px",
+                  background: "rgba(0,113,227,0.03)",
+                  borderRadius: "var(--radius)",
+                  padding: "16px 20px",
+                  maxHeight: "200px",
+                  overflow: "hidden",
+                  position: "relative",
+                }}>
+                  <div style={{
+                    fontSize: ".72rem",
+                    fontWeight: 600,
+                    color: "var(--accent)",
+                    marginBottom: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}>
+                    <span style={{
+                      display: "inline-block",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "var(--accent)",
+                      animation: "spin 1s ease-in-out infinite",
+                    }} />
+                    Generando ranking...
+                  </div>
+                  <pre style={{
+                    fontSize: ".7rem",
+                    color: "var(--ink3)",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    lineHeight: 1.5,
+                    margin: 0,
+                    fontFamily: "var(--font-body)",
+                    opacity: 0.6,
+                  }}>
+                    {streamingText.slice(-400)}
+                  </pre>
+                  <div style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "40px",
+                    background: "linear-gradient(transparent, rgba(0,113,227,0.03))",
+                  }} />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -748,7 +846,8 @@ function restart() {
                           <div className="verd-razon">{auto.razon}</div>
                         </td>
                         <td>
-                          <div className="motor-info">{auto.motor_disponible}</div>
+                          <div className="motor-info">{auto.motorizacion}</div>
+                          <div className="consumo-tag" style={{ color: "var(--ink2)", marginBottom:"2px" }}>{auto.motor_linea}</div>
                           <div className="consumo-tags">
                             {auto.consumo_ciudad && <span className="consumo-tag" style={{ color: "var(--ink2)" }}>Ciudad: {auto.consumo_ciudad}</span>}
                             {auto.consumo_ruta && <span className="consumo-tag" style={{ color: "var(--ink3)" }}>Ruta: {auto.consumo_ruta}</span>}
