@@ -168,7 +168,7 @@ export default async (req, context) => {
         }
       }
 
-      // --- Log to Supabase ---
+      // --- Log to Supabase (fire and forget, sin await) ---
       if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
         try {
           const match = fullText.match(/\{[\s\S]*\}/);
@@ -179,7 +179,7 @@ export default async (req, context) => {
               (usage.cache_read * PRICING.cache_read / 1_000_000) +
               (usage.output * PRICING.output / 1_000_000);
 
-            await fetch(`${process.env.SUPABASE_URL}/rest/v1/interacciones`, {
+            fetch(`${process.env.SUPABASE_URL}/rest/v1/interacciones`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -197,12 +197,16 @@ export default async (req, context) => {
                 tokens_cache: usage.cache_read,
                 precio_usd: parseFloat(costoUsd.toFixed(6)),
               }),
-            });
+            }).catch(err => console.error("Supabase error:", err));
           }
         } catch (logErr) {
           console.error("Supabase log error:", logErr);
         }
       }
+
+      // Enviar done AL FINAL, dentro del IIFE
+      await writer.write(encoder.encode(sseEvent({ type: "done" })));
+
     } catch (e) {
       console.error("Stream error:", e);
       try {
@@ -214,9 +218,7 @@ export default async (req, context) => {
       } catch (_) {}
     }
   })();
-
-  await writer.write(encoder.encode(sseEvent({ type: "done" })));
-
+  
   return new Response(readable, {
     status: 200,
     headers: {
